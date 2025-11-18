@@ -1,0 +1,11 @@
+# 기본 공통 설정
+spring:
+  application:
+    name: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+

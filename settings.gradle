@@ -1,0 +1,19 @@
+rootProject.name = 'api'
+
+// Server modules
+include 'server:config'
+include 'server:discovery'
+include 'server:eureka'
+
+// Service modules
+include 'service:common'
+include 'service:soccer'
+include 'service:user'
+
+// Explicitly set project directories
+project(':server:config').projectDir = new File(rootDir, 'server/config')
+project(':server:discovery').projectDir = new File(rootDir, 'server/discovery')
+project(':server:eureka').projectDir = new File(rootDir, 'server/eureka')
+project(':service:common').projectDir = new File(rootDir, 'service/common')
+project(':service:soccer').projectDir = new File(rootDir, 'service/soccer')
+project(':service:user').projectDir = new File(rootDir, 'service/user')

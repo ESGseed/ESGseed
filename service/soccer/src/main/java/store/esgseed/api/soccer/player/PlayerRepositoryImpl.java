@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PlayerRepositoryImpl implements PlayerRepositoryCustom {
 
+    @SuppressWarnings("unused")
     private final JPAQueryFactory queryFactory;
 
     // Custom QueryDSL query implementations will be added here

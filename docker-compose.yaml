@@ -24,8 +24,8 @@ services:
   # Config Server - 가장 먼저 실행
   config-server:
     build:
-      context: ./server/config
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./server/config/Dockerfile
     container_name: config-server
     ports:
       - "8888:8888"
@@ -40,8 +40,8 @@ services:
   # Eureka Server - Config Server 이후 실행
   eureka-server:
     build:
-      context: ./server/eureka
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./server/eureka/Dockerfile
     container_name: eureka-server
     ports:
       - "8761:8761"
@@ -61,8 +61,8 @@ services:
   # Discovery Service (API Gateway 포함) - Eureka Server 이후 실행
   discovery-service:
     build:
-      context: ./server/discovery
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./server/discovery/Dockerfile
     container_name: discovery-service
     ports:
       - "9000:9000"
@@ -83,8 +83,8 @@ services:
   # Common Service
   common-service:
     build:
-      context: ./service/common
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./service/common/Dockerfile
     container_name: common-service
     ports:
       - "8080:8080"
@@ -106,8 +106,8 @@ services:
   # User Service
   user-service:
     build:
-      context: ./service/user
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./service/user/Dockerfile
     container_name: user-service
     ports:
       - "8081:8081"
@@ -129,8 +129,8 @@ services:
   # Soccer Service
   soccer-service:
     build:
-      context: ./service/soccer
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./service/soccer/Dockerfile
     container_name: soccer-service
     ports:
       - "8082:8082"

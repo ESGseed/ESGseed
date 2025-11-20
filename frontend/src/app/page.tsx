@@ -1,28 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import axios from 'axios';
+import Link from 'next/link';
 
 export default function Home() {
-  const [inputValue, setInputValue] = useState('');
-
-  // 통합 검색 함수 (수정됨!)
-  const searchSoccer = async (keyword: string) => {
-    try {
-      // 환경 변수에서 API URL 가져오기, 없으면 기본값 사용
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const response = await axios.get(`${apiUrl}/api/soccer/search`, {
-        params: { keyword }  // ← keyword로 통일!
-      });
-
-      console.log('백엔드 응답:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('검색 실패:', error);
-      throw error;
-    }
-  };
-
   // 네트워크 연결 테스트 (Gateway를 거쳐서 Soccer Service로)
   const testConnection = async () => {
     const apiGateway = process.env.NEXT_PUBLIC_API_GATEWAY || 'http://localhost:9000';
@@ -34,7 +14,6 @@ export default function Home() {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       // Gateway를 거쳐서 Soccer Service로 요청
-      // http://api-gateway:9000/api/soccer/players
       const response = await fetch(`${apiGateway}${soccerApi}/players`, {
         method: 'GET',
         signal: controller.signal
@@ -56,79 +35,60 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-3xl px-4">
-        <h1 className="text-3xl sm:text-4xl font-medium text-gray-800 mb-12 text-center">
-          지금 무슨 생각을 하시나요?
+      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl px-4">
+        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 text-center">
+          Welcome
         </h1>
+        <p className="text-lg text-gray-600 mb-12 text-center">
+          서비스에 오신 것을 환영합니다
+        </p>
 
-        <div className="w-full max-w-2xl">
-          <div className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-shadow bg-white">
-            <button className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-
-            <input
-              type="text"
-              placeholder="선수, 팀, 경기장을 검색하세요"
-              className="flex-1 outline-none text-gray-700 placeholder-gray-400 bg-transparent"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={async (e) => {
-                if (e.key === 'Enter' && inputValue.trim()) {
-                  await searchSoccer(inputValue);
-                }
-              }}
-            />
-
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* 검색 버튼 */}
-              <button
-                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors"
-                onClick={async () => {
-                  if (!inputValue.trim()) {
-                    alert('검색어를 입력해주세요!');
-                    return;
-                  }
-
-                  await searchSoccer(inputValue);  // ← 수정된 함수 호출
-                  console.log("검색한 키워드: " + inputValue);
-                }}
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-
-              <button className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6m0 0a2 2 0 012-2h2a2 2 0 012 2v13m-6-6h6" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12v7m14-7v7" />
-                </svg>
-              </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+          {/* ESG 카드 */}
+          <Link
+            href="/esg"
+            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 p-8 border border-green-200 hover:border-green-300 transition-all hover:shadow-lg"
+          >
+            <div className="relative z-10">
+              <div className="mb-4 text-4xl">🌱</div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">ESG</h2>
+              <p className="text-gray-600">
+                ESG 보고서 작성 및 상담 서비스
+              </p>
             </div>
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-green-100/0 to-green-100/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
 
-          <p className="text-xs text-gray-500 text-center mt-4">
-            축구 관련 정보를 검색할 수 있습니다.
-          </p>
+          {/* Soccer 카드 */}
+          <Link
+            href="/soccer"
+            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 p-8 border border-blue-200 hover:border-blue-300 transition-all hover:shadow-lg"
+          >
+            <div className="relative z-10">
+              <div className="mb-4 text-4xl">⚽</div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Soccer</h2>
+              <p className="text-gray-600">
+                축구 선수, 팀, 경기장 정보 검색
+              </p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-100/0 to-blue-100/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
+        </div>
 
-          {/* 네트워크 연결 테스트 버튼 */}
-          <div className="mt-6 flex justify-center">
-            <button
-              onClick={testConnection}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-            >
-              🔌 네트워크 연결 테스트
-            </button>
-          </div>
+        {/* 네트워크 연결 테스트 버튼 */}
+        <div className="mt-12 flex justify-center">
+          <button
+            onClick={testConnection}
+            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+          >
+            🔌 네트워크 연결 테스트
+          </button>
         </div>
       </main>
 
-      <footer className="w-full py-4 px-4 text-center">
+      <footer className="w-full py-6 px-4 text-center border-t border-gray-200 mt-12">
         <p className="text-sm text-gray-500">
-          ChatGPT Clone · Made with Next.js
+          Made with Next.js
         </p>
       </footer>
     </div>

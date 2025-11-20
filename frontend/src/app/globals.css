@@ -25,3 +25,60 @@ body {
     text-wrap: balance;
   }
 }
+
+/* ESG Chat Bubble Styles - Updated for better design */
+.chat-bubble-ai {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.chat-bubble-user {
+  background-color: #dbeafe;
+}
+
+/* Highlight Source Styles */
+.highlight-source {
+  background-color: #fef3c7;
+  border-bottom: 2px solid #f59e0b;
+  cursor: pointer;
+  position: relative;
+}
+
+.highlight-source .tooltip {
+  visibility: hidden;
+  width: 200px;
+  background-color: #374151;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 8px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.75rem;
+}
+
+.highlight-source .tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #374151 transparent transparent transparent;
+}
+
+.highlight-source:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.highlight-source-error {
+  background-color: #fee2e2;
+  border-bottom: 2px solid #ef4444;
+}

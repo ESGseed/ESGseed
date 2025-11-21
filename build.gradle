@@ -6,7 +6,7 @@ plugins {
 
 bootJar.enabled = false
 
-group = 'store.esgseed'
+group = 'site.esgseed'
 version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
 
@@ -17,7 +17,7 @@ java {
 }
 
 allprojects {
-	group = 'store.esgseed'
+	group = 'site.esgseed'
 	version = '0.0.1-SNAPSHOT'
 	
 	repositories {

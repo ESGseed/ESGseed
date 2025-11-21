@@ -30,6 +30,14 @@ spring:
             - Path=/api/common/**
           filters:
             - RewritePath=/api/common/(?<segment>.*), /api/$\{segment}
+        
+        # ESG Service Routing
+        - id: esg-service
+          uri: lb://ESG-SERVICE
+          predicates:
+            - Path=/api/esg/**
+          filters:
+            - RewritePath=/api/esg/(?<segment>.*), /api/$\{segment}
       
       # CORS Configuration
       globalcors:

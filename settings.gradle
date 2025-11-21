@@ -9,6 +9,7 @@ include 'server:eureka'
 include 'service:common'
 include 'service:soccer'
 include 'service:user'
+include 'service:esg'
 
 // Explicitly set project directories
 project(':server:config').projectDir = new File(rootDir, 'server/config')
@@ -17,3 +18,4 @@ project(':server:eureka').projectDir = new File(rootDir, 'server/eureka')
 project(':service:common').projectDir = new File(rootDir, 'service/common')
 project(':service:soccer').projectDir = new File(rootDir, 'service/soccer')
 project(':service:user').projectDir = new File(rootDir, 'service/user')
+project(':service:esg').projectDir = new File(rootDir, 'service/esg')

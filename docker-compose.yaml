@@ -149,6 +149,29 @@ services:
       - DB_PASSWORD=esgseed1234
       - DB_NAME=esgseeddb
 
+  # ESG Service
+  esg-service:
+    build:
+      context: .
+      dockerfile: ./service/esg/Dockerfile
+    container_name: esg-service
+    ports:
+      - "8083:8083"
+    networks:
+      - microservices-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - DB_USER=esgseed
+      - DB_PASSWORD=esgseed1234
+      - DB_NAME=esgseeddb
+
   # Frontend Service
   frontend:
     build:
@@ -165,6 +188,7 @@ services:
       - NEXT_PUBLIC_SOCCER_API=/api/soccer
       - NEXT_PUBLIC_USER_API=/api/user
       - NEXT_PUBLIC_COMMON_API=/api/common
+      - NEXT_PUBLIC_ESG_API=/api/esg
     networks:
       - microservices-network
     depends_on:

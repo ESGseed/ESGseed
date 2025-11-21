@@ -6,6 +6,7 @@ const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY || 'http://localhost:900
 const SOCCER_API = process.env.NEXT_PUBLIC_SOCCER_API || '/api/soccer';
 const USER_API = process.env.NEXT_PUBLIC_USER_API || '/api/user';
 const COMMON_API = process.env.NEXT_PUBLIC_COMMON_API || '/api/common';
+const ESG_API = process.env.NEXT_PUBLIC_ESG_API || '/api/esg';
 
 /**
  * Base fetch wrapper with error handling
@@ -125,11 +126,50 @@ export const commonApi = {
     apiFetch(`${API_GATEWAY}${COMMON_API}/health`),
 };
 
+/**
+ * ESG Service API
+ */
+export const esgApi = {
+  // Get all checklist items
+  getChecklistItems: (category?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (status) params.append('status', status);
+    const query = params.toString();
+    return apiFetch(`${API_GATEWAY}${ESG_API}/checklists${query ? `?${query}` : ''}`);
+  },
+
+  // Get checklist item by ID
+  getChecklistItem: (id: number) =>
+    apiFetch(`${API_GATEWAY}${ESG_API}/checklists/${id}`),
+
+  // Create checklist item
+  createChecklistItem: (data: Record<string, unknown>) =>
+    apiFetch(`${API_GATEWAY}${ESG_API}/checklists`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Update checklist item
+  updateChecklistItem: (id: number, data: Record<string, unknown>) =>
+    apiFetch(`${API_GATEWAY}${ESG_API}/checklists/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // Delete checklist item
+  deleteChecklistItem: (id: number) =>
+    apiFetch(`${API_GATEWAY}${ESG_API}/checklists/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 // Named export instead of anonymous default export
 const apiClient = {
   soccer: soccerApi,
   user: userApi,
   common: commonApi,
+  esg: esgApi,
 };
 
 export default apiClient;

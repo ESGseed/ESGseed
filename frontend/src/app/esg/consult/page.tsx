@@ -1,6 +1,6 @@
-import { ConsultPage } from '@/features/esg/pages/ConsultPage';
+import { ConsultLayout } from '@/features/esg/components/ConsultLayout';
 
 export default function Page() {
-    return <ConsultPage />;
+  return <ConsultLayout />;
 }
 

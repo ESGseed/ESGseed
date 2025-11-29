@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: gateway-server
+  
+  cloud:
+    gateway:
+      # Eureka 자동 라우팅 비활성화
+      discovery:
+        locator:
+          enabled: false
+      
+      # 수동 라우팅 설정 (더 세밀한 제어)
+      routes:
+        # User Service 통합 라우팅 (OAuth 포함: kakao, naver, google + users)
+        # Gateway에서 StripPrefix=1로 /api 제거
+        # 예: /api/user/kakao/login → /user/kakao/login (서비스로 전달)
+        # 예: /api/user/naver/login → /user/naver/login (서비스로 전달)
+        # 예: /api/user/google/login → /user/google/login (서비스로 전달)
+        # 예: /api/user/users/123 → /user/users/123 (서비스로 전달)
+        - id: user-service
+          uri: http://${USER_SERVICE_HOST:user-service}:${USER_SERVICE_PORT:8083}
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=1  # 첫 번째 세그먼트(/api) 제거 → /user/** 전달
+        
+        # Common Service 라우팅
+        # 예: /api/common/data → /common/data (서비스로 전달)
+        - id: common-service
+          uri: http://${COMMON_SERVICE_HOST:common-service}:${COMMON_SERVICE_PORT:8082}
+          predicates:
+            - Path=/api/common/**
+          filters:
+            - StripPrefix=1  # 첫 번째 세그먼트(/api) 제거 → /common/** 전달
+      
+      # 글로벌 CORS 설정
+      # 주의: allowCredentials: true일 때는 allowedOrigins에 "*"를 사용할 수 없음
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+    
+server:
+  port: 8080
+
+# Swagger UI 설정
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

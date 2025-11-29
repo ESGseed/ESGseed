@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, PieChart, TrendingUp, Download, RefreshCw, Settings, Plus, Minus } from 'lucide-react';
+import { useReportStore } from '@/store/reportStore';
+import { useToast } from '@/hooks/use-toast';
 
 interface DataPoint {
   label: string;
@@ -13,6 +15,8 @@ interface DataPoint {
 }
 
 export function ChartsPage() {
+  const { addChart } = useReportStore();
+  const { toast } = useToast();
   const [chartType, setChartType] = useState('');
   const [dataSource, setDataSource] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -200,6 +204,29 @@ export function ChartsPage() {
     setTimeout(() => {
       setIsGenerating(false);
       renderChart();
+      
+      // 차트 생성 후 Store에 저장
+      if (chartInstanceRef.current) {
+        const chartImage = chartInstanceRef.current.toBase64Image('image/png', 1.0);
+        const validDataPoints = dataPoints.filter(p => p.label.trim() !== '');
+        
+        if (validDataPoints.length > 0) {
+          addChart({
+            chartType: chartType as 'bar' | 'pie' | 'line' | 'area',
+            dataSource,
+            chartTitle,
+            xAxisLabel,
+            yAxisLabel,
+            dataPoints: validDataPoints,
+            chartImage,
+          });
+          
+          toast({
+            title: '차트 저장 완료',
+            description: '차트가 저장되었습니다. 최종보고서에서 확인할 수 있습니다.',
+          });
+        }
+      }
     }, 500);
   };
 

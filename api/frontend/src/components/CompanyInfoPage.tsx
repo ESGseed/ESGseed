@@ -1,28 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Building2, MapPin, Users, Target, Save, FileText, Globe, Activity } from 'lucide-react';
-
-interface CompanyData {
-  companyName: string;
-  businessNumber: string;
-  ceoName: string;
-  industry: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  mission: string;
-  vision: string;
-  esgGoals: string;
-  employees: string;
-  shareholders: string;
-  stakeholders: string;
-  communication: string;
-}
+import { Building2, MapPin, Users, Target, Save, FileText, Globe, Activity, CheckCircle2 } from 'lucide-react';
+import { useReportStore, type CompanyData } from '@/store/reportStore';
+import { useToast } from '@/hooks/use-toast';
 
 const initialData: CompanyData = {
   companyName: '',
@@ -43,13 +27,34 @@ const initialData: CompanyData = {
 };
 
 export function CompanyInfoPage() {
+  const { companyInfo, setCompanyInfo } = useReportStore();
+  const { toast } = useToast();
   const [formData, setFormData] = useState<CompanyData>(initialData);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Store에서 저장된 데이터 불러오기
+  useEffect(() => {
+    if (companyInfo) {
+      setFormData(companyInfo);
+      setIsSaved(true);
+    }
+  }, [companyInfo]);
 
   const handleChange = (field: keyof CompanyData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
+    setIsSaved(false); // 데이터 변경 시 저장 상태 초기화
+  };
+
+  const handleSave = () => {
+    setCompanyInfo(formData);
+    setIsSaved(true);
+    toast({
+      title: '저장 완료',
+      description: '회사정보가 저장되었습니다. 최종보고서에서 확인할 수 있습니다.',
+    });
   };
 
   // 섹션별 필드 그룹화
@@ -228,10 +233,20 @@ export function CompanyInfoPage() {
         <div className="mt-8 text-center">
           <Button
             size="lg"
+            onClick={handleSave}
             className="bg-primary hover:bg-primary-glow text-white px-8 py-4 shadow-seed"
           >
-            <Save className="mr-2 h-5 w-5" />
-            회사정보 저장
+            {isSaved ? (
+              <>
+                <CheckCircle2 className="mr-2 h-5 w-5" />
+                저장됨
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-5 w-5" />
+                회사정보 저장
+              </>
+            )}
           </Button>
         </div>
       </div>

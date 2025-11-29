@@ -1,21 +1,39 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { BookOpen, Download, Eye, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { BookOpen, Download, Eye, FileText, CheckCircle, Clock, AlertCircle, Building2, BarChart3 } from 'lucide-react';
+import { useReportStore } from '@/store/reportStore';
 
 export function FinalReportPage() {
-  const [reportSections] = useState([
-    { id: 'company', title: '회사정보', status: 'completed', progress: 100 },
-    { id: 'strategy', title: '지속가능경영 전략', status: 'completed', progress: 100 },
-    { id: 'environmental', title: '환경 성과', status: 'in-progress', progress: 75 },
-    { id: 'social', title: '사회적 책임', status: 'in-progress', progress: 60 },
-    { id: 'governance', title: '지배구조', status: 'pending', progress: 30 },
-    { id: 'performance', title: '성과 지표', status: 'pending', progress: 20 },
-    { id: 'future', title: '향후 계획', status: 'pending', progress: 10 }
-  ]);
+  const { companyInfo, contentSections, charts, reportMetadata, getReportData } = useReportStore();
+  
+  // 실제 데이터 기반으로 섹션 상태 계산
+  const reportSections = useMemo(() => {
+    const sections = [
+      {
+        id: 'company',
+        title: '회사정보',
+        status: companyInfo ? (companyInfo.companyName ? 'completed' : 'in-progress') : 'pending',
+        progress: companyInfo ? (companyInfo.companyName ? 100 : 50) : 0,
+      },
+      {
+        id: 'content',
+        title: '생성된 문단',
+        status: contentSections.length > 0 ? (contentSections.length >= 3 ? 'completed' : 'in-progress') : 'pending',
+        progress: Math.min(100, (contentSections.length / 5) * 100),
+      },
+      {
+        id: 'charts',
+        title: '차트 및 시각화',
+        status: charts.length > 0 ? (charts.length >= 2 ? 'completed' : 'in-progress') : 'pending',
+        progress: Math.min(100, (charts.length / 3) * 100),
+      },
+    ];
+    return sections;
+  }, [companyInfo, contentSections.length, charts.length]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -39,9 +57,12 @@ export function FinalReportPage() {
     }
   };
 
-  const overallProgress = Math.round(
-    reportSections.reduce((sum, section) => sum + section.progress, 0) / reportSections.length
-  );
+  const overallProgress = useMemo(() => {
+    if (reportSections.length === 0) return 0;
+    return Math.round(
+      reportSections.reduce((sum, section) => sum + section.progress, 0) / reportSections.length
+    );
+  }, [reportSections]);
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -164,10 +185,10 @@ export function FinalReportPage() {
                       <BookOpen className="h-8 w-8 text-white" />
                     </div>
                     <h2 className="text-2xl font-bold text-foreground mb-2">
-                      2024 지속가능경영 보고서
+                      {reportMetadata.reportYear} 지속가능경영 보고서
                     </h2>
                     <p className="text-lg text-muted-foreground mb-4">
-                      그린테크 주식회사
+                      {companyInfo?.companyName || '회사명을 입력해주세요'}
                     </p>
                     <Badge variant="secondary" className="mb-4">
                       IFRS 기준 준수
@@ -177,59 +198,166 @@ export function FinalReportPage() {
                   <div className="text-left max-w-md mx-auto space-y-2 text-sm text-muted-foreground">
                     <div className="flex justify-between">
                       <span>발행일:</span>
-                      <span>2024년 12월</span>
+                      <span>{new Date(reportMetadata.lastUpdated).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>보고 기간:</span>
-                      <span>2024년 1월 - 12월</span>
+                      <span>{reportMetadata.reportPeriod}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>페이지 수:</span>
-                      <span>약 45페이지</span>
+                      <span>약 {Math.max(20, contentSections.length * 2 + charts.length * 3 + 10)}페이지</span>
                     </div>
                     <div className="flex justify-between">
                       <span>언어:</span>
-                      <span>한국어</span>
+                      <span>{reportMetadata.language}</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 목차 미리보기 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">목차</CardTitle>
-                <CardDescription>
-                  보고서에 포함될 주요 섹션들입니다
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { title: 'CEO 메시지', page: 3 },
-                    { title: '회사 개요', page: 5 },
-                    { title: '지속가능경영 전략', page: 8 },
-                    { title: '환경 성과 (Environmental)', page: 12 },
-                    { title: '사회적 책임 (Social)', page: 20 },
-                    { title: '지배구조 (Governance)', page: 28 },
-                    { title: '핵심 성과 지표 (KPI)', page: 35 },
-                    { title: '향후 계획 및 목표', page: 40 },
-                    { title: '부록 및 데이터', page: 43 }
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 border-b border-border/50 last:border-b-0">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center text-xs font-medium text-primary">
-                          {index + 1}
-                        </div>
-                        <span className="text-sm font-medium">{item.title}</span>
+            {/* 회사 개요 섹션 */}
+            {companyInfo && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <Building2 className="h-5 w-5 mr-2 text-primary" />
+                    회사 개요
+                  </CardTitle>
+                  <CardDescription>
+                    회사정보 페이지에서 입력한 데이터가 자동으로 표시됩니다
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {companyInfo.companyName && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">회사명</h4>
+                      <p className="text-foreground">{companyInfo.companyName}</p>
+                    </div>
+                  )}
+                  {companyInfo.ceoName && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">대표자</h4>
+                      <p className="text-foreground">{companyInfo.ceoName}</p>
+                    </div>
+                  )}
+                  {companyInfo.industry && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">업종</h4>
+                      <p className="text-foreground">{companyInfo.industry}</p>
+                    </div>
+                  )}
+                  {companyInfo.mission && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">미션</h4>
+                      <p className="text-foreground whitespace-pre-wrap">{companyInfo.mission}</p>
+                    </div>
+                  )}
+                  {companyInfo.vision && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">비전</h4>
+                      <p className="text-foreground whitespace-pre-wrap">{companyInfo.vision}</p>
+                    </div>
+                  )}
+                  {companyInfo.esgGoals && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">ESG 핵심 목표</h4>
+                      <p className="text-foreground whitespace-pre-wrap">{companyInfo.esgGoals}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 생성된 문단 섹션 */}
+            {contentSections.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">생성된 IFRS S2 문단</CardTitle>
+                  <CardDescription>
+                    문단생성 페이지에서 생성된 문단들이 자동으로 표시됩니다
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {contentSections.map((section) => (
+                    <div key={section.id} className="border-b pb-6 last:border-b-0 last:pb-0">
+                      <h3 className="text-lg font-bold text-primary mb-3">{section.title}</h3>
+                      <div className="bg-muted/50 p-4 rounded-lg mb-3">
+                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                          {section.content}
+                        </p>
                       </div>
-                      <span className="text-xs text-muted-foreground">{item.page}</span>
+                      {section.aiComment && (
+                        <div
+                          className={`p-3 rounded-lg text-sm ${
+                            section.commentType === 'warning'
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}
+                        >
+                          <div className="font-semibold mb-1">AI 코멘트</div>
+                          <p>{section.aiComment}</p>
+                        </div>
+                      )}
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 차트 섹션 */}
+            {charts.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-primary" />
+                    차트 및 시각화
+                  </CardTitle>
+                  <CardDescription>
+                    도표및그림 페이지에서 생성된 차트들이 자동으로 표시됩니다
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {charts.map((chart) => (
+                    <div key={chart.id} className="border-b pb-6 last:border-b-0 last:pb-0">
+                      <h3 className="text-lg font-bold text-primary mb-3">{chart.chartTitle}</h3>
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        {chart.chartImage ? (
+                          <img
+                            src={chart.chartImage}
+                            alt={chart.chartTitle}
+                            className="w-full h-auto rounded"
+                          />
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p>차트 이미지가 없습니다</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3 text-sm text-muted-foreground">
+                        <p>유형: {chart.chartType} | 데이터 소스: {chart.dataSource}</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 데이터 없음 안내 */}
+            {!companyInfo && contentSections.length === 0 && charts.length === 0 && (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">보고서 데이터가 없습니다</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    회사정보, 문단생성, 도표및그림 페이지에서 데이터를 입력하면<br />
+                    여기에 자동으로 표시됩니다.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* 품질 체크리스트 */}
             <Card>

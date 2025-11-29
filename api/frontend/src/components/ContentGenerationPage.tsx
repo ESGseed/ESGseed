@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { FileText, Sparkles, Send, CheckCircle2, Clock, XCircle, Upload, Bot } from 'lucide-react';
+import { useReportStore } from '@/store/reportStore';
 
 interface ChecklistItem {
   id: string;
@@ -19,15 +20,9 @@ interface Message {
   timestamp: Date;
 }
 
-interface PreviewSection {
-  id: string;
-  title: string;
-  content: string;
-  aiComment?: string;
-  commentType?: 'info' | 'warning';
-}
-
 export function ContentGenerationPage() {
+  const { contentSections, addContentSection } = useReportStore();
+  
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([
     { id: 's2-5', label: 'S2-5: 거버넌스 (감독 주체)', status: 'completed' },
     { id: 's2-7', label: 'S2-7: 리스크 및 기회 (전략 우선순위)', status: 'in-progress' },
@@ -69,22 +64,57 @@ export function ContentGenerationPage() {
   ]);
 
   const [inputMessage, setInputMessage] = useState('');
-  const [previewSections, setPreviewSections] = useState<PreviewSection[]>([
-    {
-      id: 's2-5',
-      title: 'IFRS S2-5: GOVERNANCE',
-      content: '본 회사는 기후 관련 리스크 및 기회를 관리하기 위해 이사회 산하에 "지속가능경영위원회"를 운영하고 있습니다. 이 위원회는 분기별로 기후 리스크 및 기회에 대한 감독 역할을 수행합니다.',
-      aiComment: '표준 충족. "위원회"의 구체적 역할(예: 성과 측정, 보상 연계)을 추가하면 더 좋습니다.',
-      commentType: 'info',
-    },
-    {
-      id: 's2-15',
-      title: 'IFRS S2-15: SCENARIO ANALYSIS',
-      content: '본 회사는 NZE 2050 및 2도 시나리오를 활용하여 기후 관련 전환 리스크를 분석하고 있습니다. [기준연도 데이터 입력 필요]',
-      aiComment: '정량적 요소 누락. 왼쪽 채팅창에 "Scope 1,2 기준연도 데이터"를 입력해주세요.',
-      commentType: 'warning',
-    },
-  ]);
+  
+  // Store에서 저장된 섹션들을 로컬 state로 변환 (미리보기용)
+  const [previewSections, setPreviewSections] = useState(
+    contentSections.map(s => ({
+      id: s.id,
+      title: s.title,
+      content: s.content,
+      aiComment: s.aiComment,
+      commentType: s.commentType,
+    }))
+  );
+
+  // 초기 섹션들을 Store에 저장 (한 번만 실행)
+  useEffect(() => {
+    if (contentSections.length === 0) {
+      // 초기 예제 섹션들 저장
+      const initialSections = [
+        {
+          id: 's2-5',
+          title: 'IFRS S2-5: GOVERNANCE',
+          content: '본 회사는 기후 관련 리스크 및 기회를 관리하기 위해 이사회 산하에 "지속가능경영위원회"를 운영하고 있습니다. 이 위원회는 분기별로 기후 리스크 및 기회에 대한 감독 역할을 수행합니다.',
+          aiComment: '표준 충족. "위원회"의 구체적 역할(예: 성과 측정, 보상 연계)을 추가하면 더 좋습니다.',
+          commentType: 'info' as const,
+        },
+        {
+          id: 's2-15',
+          title: 'IFRS S2-15: SCENARIO ANALYSIS',
+          content: '본 회사는 NZE 2050 및 2도 시나리오를 활용하여 기후 관련 전환 리스크를 분석하고 있습니다. [기준연도 데이터 입력 필요]',
+          aiComment: '정량적 요소 누락. 왼쪽 채팅창에 "Scope 1,2 기준연도 데이터"를 입력해주세요.',
+          commentType: 'warning' as const,
+        },
+      ];
+      
+      initialSections.forEach(section => {
+        addContentSection(section);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Store의 contentSections가 변경되면 로컬 state 업데이트
+  useEffect(() => {
+    setPreviewSections(
+      contentSections.map(s => ({
+        id: s.id,
+        title: s.title,
+        content: s.content,
+        aiComment: s.aiComment,
+        commentType: s.commentType,
+      }))
+    );
+  }, [contentSections]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isUploaded, setIsUploaded] = useState(true);
@@ -128,8 +158,29 @@ export function ContentGenerationPage() {
             item.id === 's2-7' ? { ...item, status: 'completed' } : item
           )
         );
+        
+        // S2-7 문단 생성 및 Store에 저장
+        const newSection = {
+          id: 's2-7',
+          title: 'IFRS S2-7: RISKS AND OPPORTUNITIES',
+          content: inputMessage + '\n\n[생성된 문단 내용이 여기에 표시됩니다]',
+          aiComment: '문단이 생성되었습니다. 내용을 확인하고 수정해주세요.',
+          commentType: 'info' as const,
+        };
+        addContentSection(newSection);
       }
     }, 1000);
+  };
+
+  // 문단이 수동으로 추가/수정될 때 Store에 저장
+  const handleSectionUpdate = (section: typeof previewSections[0]) => {
+    addContentSection({
+      id: section.id,
+      title: section.title,
+      content: section.content,
+      aiComment: section.aiComment,
+      commentType: section.commentType,
+    });
   };
 
   const getStatusIcon = (status: ChecklistItem['status']) => {

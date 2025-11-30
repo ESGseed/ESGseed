@@ -1,0 +1,11 @@
+[project]
+name = "gateway"
+version = "0.1.0"
+description = "API Gateway service with FastAPI"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "fastmcp>=2.13.1",
+]

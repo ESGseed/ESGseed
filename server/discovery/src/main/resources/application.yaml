@@ -1,0 +1,76 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  cloud:
+    gateway:
+      routes:
+        # Soccer Service Routing
+        - id: soccer-service
+          uri: lb://SOCCER-SERVICE
+          predicates:
+            - Path=/api/soccer/**
+          filters:
+            - RewritePath=/api/soccer/(?<segment>.*), /api/$\{segment}
+        
+        # User Service Routing
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - RewritePath=/api/user/(?<segment>.*), /api/$\{segment}
+        
+        # Common Service Routing
+        - id: common-service
+          uri: lb://COMMON-SERVICE
+          predicates:
+            - Path=/api/common/**
+          filters:
+            - RewritePath=/api/common/(?<segment>.*), /api/$\{segment}
+        
+        # ESG Service Routing
+        - id: esg-service
+          uri: lb://ESG-SERVICE
+          predicates:
+            - Path=/api/esg/**
+          filters:
+            - RewritePath=/api/esg/(?<segment>.*), /api/$\{segment}
+      
+      # CORS Configuration
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://ui-server-frontend:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true

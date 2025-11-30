@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/DockerFile
+    ports:
+      - "9000:9000"
+    container_name: gateway-app
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  clawler-service:
+    build:
+      context: .
+      dockerfile: services/clawler_serice/DockerFile
+    ports:
+      - "9001:9001"
+    container_name: clawler-service-app
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  agent-service:
+    build:
+      context: .
+      dockerfile: services/agent_service/DockerFile
+    ports:
+      - "9002:9002"
+    container_name: agent-service-app
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

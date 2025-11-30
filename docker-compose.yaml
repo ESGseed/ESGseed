@@ -1,0 +1,227 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: esgseed
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=esgseed
+      - POSTGRES_PASSWORD=esgseed1234
+      - POSTGRES_DB=esgseeddb
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U esgseed -d esgseeddb" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: esgseed-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Config Server - 가장 먼저 실행
+  config-server:
+    build:
+      context: .
+      dockerfile: ./server/config/Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Eureka Server - Config Server 이후 실행
+  eureka-server:
+    build:
+      context: .
+      dockerfile: ./server/eureka/Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+
+  # Discovery Service (API Gateway 포함) - Eureka Server 이후 실행
+  discovery-service:
+    build:
+      context: .
+      dockerfile: ./server/discovery/Dockerfile
+    container_name: discovery-service
+    ports:
+      - "9000:9000"
+    networks:
+      - microservices-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Common Service
+  common-service:
+    build:
+      context: .
+      dockerfile: ./service/common/Dockerfile
+    container_name: common-service
+    ports:
+      - "8080:8080"
+    networks:
+      - microservices-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - DB_USER=esgseed
+      - DB_PASSWORD=esgseed1234
+      - DB_NAME=esgseeddb
+
+  # User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: ./service/user/Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    networks:
+      - microservices-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - DB_USER=esgseed
+      - DB_PASSWORD=esgseed1234
+      - DB_NAME=esgseeddb
+
+  # Soccer Service
+  soccer-service:
+    build:
+      context: .
+      dockerfile: ./service/soccer/Dockerfile
+    container_name: soccer-service
+    ports:
+      - "8082:8082"
+    networks:
+      - microservices-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - DB_USER=esgseed
+      - DB_PASSWORD=esgseed1234
+      - DB_NAME=esgseeddb
+
+  # ESG Service
+  esg-service:
+    build:
+      context: .
+      dockerfile: ./service/esg/Dockerfile
+    container_name: esg-service
+    ports:
+      - "8083:8083"
+    networks:
+      - microservices-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - DB_USER=esgseed
+      - DB_PASSWORD=esgseed1234
+      - DB_NAME=esgseeddb
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ui-server-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # API Gateway를 통한 통합 엔드포인트 (Discovery Service가 Gateway 역할)
+      - NEXT_PUBLIC_API_GATEWAY=http://discovery-service:9000
+      # 각 서비스별 경로
+      - NEXT_PUBLIC_SOCCER_API=/api/soccer
+      - NEXT_PUBLIC_USER_API=/api/user
+      - NEXT_PUBLIC_COMMON_API=/api/common
+      - NEXT_PUBLIC_ESG_API=/api/esg
+    networks:
+      - microservices-network
+    depends_on:
+      - discovery-service
+    restart: unless-stopped
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local

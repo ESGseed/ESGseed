@@ -1,0 +1,6 @@
+rootProject.name = 'api'
+
+include 'server:config'
+include 'server:discovery'
+include 'service:common'
+include 'service:user'

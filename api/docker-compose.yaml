@@ -1,0 +1,119 @@
+services:
+  # Eureka 서비스 제거됨 (SimpleDiscoveryClient 사용)
+  # config 서비스도 필요없다면 제거 가능 (현재는 유지)
+
+  config:
+    build:
+      context: .
+      dockerfile: server/config/Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - api-network
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=native
+
+  gateway:
+    build:
+      context: .
+      dockerfile: server/discovery/Dockerfile
+    container_name: gateway-server
+    ports:
+      - "8080:8080"
+    networks:
+      - api-network
+    depends_on:
+      - user
+      - common
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=8083
+      - COMMON_SERVICE_HOST=common-service
+      - COMMON_SERVICE_PORT=8082
+
+  common:
+    build:
+      context: .
+      dockerfile: service/common/Dockerfile
+    container_name: common-service
+    ports:
+      - "8082:8082"
+    networks:
+      - api-network
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+
+  user:
+    build:
+      context: .
+      dockerfile: service/user/Dockerfile
+    container_name: user-service
+    ports:
+      - "8083:8083"
+    networks:
+      - api-network
+    depends_on:
+      - common
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      # 카카오 OAuth 환경변수
+      - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+      - KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI:-http://localhost:3000/auth/kakao/callback}
+      - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
+      - KAKAO_ADMIN_KEY=${KAKAO_ADMIN_KEY:-}
+      # 네이버 OAuth 환경변수
+      - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
+      - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
+      - NAVER_REDIRECT_URI=${NAVER_REDIRECT_URI:-http://localhost:3000/auth/naver/callback}
+      # 구글 OAuth 환경변수
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3000/auth/google/callback}
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    networks:
+      - api-network
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=api_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    networks:
+      - api-network
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  api-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+
+

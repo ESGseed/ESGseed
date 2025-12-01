@@ -51,10 +51,10 @@ export function ChartsPage() {
   const [dataPoints, setDataPoints] = useState<DataPoint[]>(currentChart?.dataPoints && currentChart.dataPoints.length > 0
     ? currentChart.dataPoints
     : [
-        { label: '2021년', value: 1200 },
-        { label: '2022년', value: 1150 },
-        { label: '2023년', value: 1080 },
-        { label: '2024년', value: 1010 },
+    { label: '2021년', value: 1200 },
+    { label: '2022년', value: 1150 },
+    { label: '2023년', value: 1080 },
+    { label: '2024년', value: 1010 },
       ]
   );
   const [xAxisLabel, setXAxisLabel] = useState(currentChart?.xAxisLabel || '월별');
@@ -96,6 +96,7 @@ export function ChartsPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chartInstanceRef = useRef<any>(null);
+  const [isChartRendered, setIsChartRendered] = useState(false);
 
   const chartTypes = [
     { value: 'bar', label: '막대 차트', icon: BarChart3, description: '카테고리별 데이터 비교에 적합' },
@@ -209,9 +210,21 @@ export function ChartsPage() {
 
   // 차트 렌더링
   useEffect(() => {
-    if (!canvasRef.current || !chartType || !dataSource) return;
+    if (!chartType || !dataSource) {
+      setIsChartRendered(false);
+      return;
+    }
 
     const loadAndRender = async () => {
+      // canvasRef가 준비될 때까지 대기
+      if (!canvasRef.current) {
+        // 다음 프레임에서 다시 시도
+        requestAnimationFrame(() => {
+          loadAndRender();
+        });
+        return;
+      }
+
       await ensureChartJsLoaded();
       renderChart();
     };
@@ -221,12 +234,21 @@ export function ChartsPage() {
 
   // 차트 렌더링 함수
   const renderChart = () => {
-    if (!canvasRef.current || !chartType) return;
+    if (!canvasRef.current || !chartType) {
+      setIsChartRendered(false);
+      return;
+    }
     // @ts-expect-error - Chart.js는 window에 동적으로 추가됨
-    if (typeof window.Chart === 'undefined') return;
+    if (typeof window.Chart === 'undefined') {
+      setIsChartRendered(false);
+      return;
+    }
 
     const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      setIsChartRendered(false);
+      return;
+    }
 
     // 기존 차트 파괴
     if (chartInstanceRef.current) {
@@ -236,7 +258,10 @@ export function ChartsPage() {
     const labels = dataPoints.map(d => d.label).filter(l => l.trim() !== '');
     const data = dataPoints.map(d => d.value).slice(0, labels.length);
 
-    if (labels.length === 0) return;
+    if (labels.length === 0) {
+      setIsChartRendered(false);
+      return;
+    }
 
     let backgroundColor, borderColor;
     const actualChartType = chartType === 'area' ? 'line' : chartType;
@@ -308,14 +333,16 @@ export function ChartsPage() {
         } : undefined
       }
     });
+    
+    setIsChartRendered(true);
   };
 
   const handleGenerate = async () => {
     if (!chartType || !dataSource) return;
     setIsGenerating(true);
     await ensureChartJsLoaded();
-    setIsGenerating(false);
-    renderChart();
+      setIsGenerating(false);
+      renderChart();
   };
 
   // 차트 다운로드
@@ -679,11 +706,11 @@ export function ChartsPage() {
                     </CardDescription>
                   </div>
                   <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" onClick={downloadChart} disabled={!chartInstanceRef.current}>
+                    <Button variant="outline" size="sm" onClick={downloadChart} disabled={!isChartRendered}>
                       <Download className="h-4 w-4 mr-1" />
                       PNG
                     </Button>
-                    <Button variant="outline" size="sm" onClick={saveChart} disabled={!chartInstanceRef.current}>
+                    <Button variant="outline" size="sm" onClick={saveChart} disabled={!isChartRendered}>
                       <Save className="h-4 w-4 mr-1" />
                       저장
                     </Button>

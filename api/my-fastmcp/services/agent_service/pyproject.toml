@@ -1,0 +1,10 @@
+[project]
+name = "agent-service"
+version = "0.1.0"
+description = "Agent service for AI and automation tasks"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+]

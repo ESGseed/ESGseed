@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: common-service
+
+server:
+  port: 8082
+
+# Eureka 설정 제거됨 (SimpleDiscoveryClient 사용)

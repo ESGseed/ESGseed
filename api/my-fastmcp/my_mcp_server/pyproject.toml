@@ -1,0 +1,15 @@
+[project]
+name = "my-mcp-server"
+version = "0.1.0"
+description = "IFRS S2 Navigator MCP Server"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastmcp>=2.13.1",
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "openai>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "pypdf>=3.0.0",
+    "python-multipart>=0.0.6",
+]
